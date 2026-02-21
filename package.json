@@ -1,0 +1,26 @@
+{
+  "name": "setlist_importer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Serverless application to create Spotify playlists from setlist.fm average setlists",
+  "dependencies": {
+    "@netlify/functions": "^5.1.2",
+    "axios": "^1.13.5",
+    "fast-check": "^4.5.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

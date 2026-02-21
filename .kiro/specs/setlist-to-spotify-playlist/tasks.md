@@ -1,0 +1,231 @@
+# Implementation Plan: Setlist to Spotify Playlist
+
+## Overview
+
+This implementation will build a serverless application using Netlify Functions with TypeScript/Node.js. The approach follows a bottom-up strategy: first implementing core utilities (OAuth, API clients), then building the main workflow orchestrator, and finally creating the Netlify function endpoints. Testing is integrated throughout to validate functionality incrementally.
+
+## Tasks
+
+- [x] 1. Set up project structure and dependencies
+  - Initialize Node.js project with TypeScript configuration
+  - Install dependencies: `axios`, `fast-check`, `@types/node`, `typescript`, `@netlify/functions`
+  - Create directory structure: `src/`, `netlify/functions/`, `tests/unit/`, `tests/properties/`
+  - Configure TypeScript with appropriate compiler options for Netlify Functions
+  - Set up test framework (Jest or Vitest)
+  - _Requirements: 6.1, 6.3_
+
+- [x] 2. Implement OAuth handler
+  - [x] 2.1 Create OAuth configuration and URL generation
+    - Define `SpotifyAuthConfig` and `TokenResponse` interfaces
+    - Implement `generateAuthUrl()` function with state parameter for CSRF protection
+    - Include required scopes: `playlist-modify-private`, `playlist-modify-public`
+    - _Requirements: 1.1_
+  - [ ]\* 2.2 Write property test for OAuth URL generation
+    - **Property 1: OAuth URL Generation**
+    - **Validates: Requirements 1.1**
+  - [x] 2.3 Implement token exchange logic
+    - Implement `exchangeCodeForToken()` function
+    - Handle POST request to Spotify token endpoint with authorization code
+    - Parse and return token response
+    - _Requirements: 1.2, 1.3_
+  - [ ]\* 2.4 Write unit tests for token exchange
+    - Test successful token exchange with mock response
+    - Test error handling for invalid codes
+    - _Requirements: 1.2, 1.4_
+  - [ ]\* 2.5 Write property test for token exchange error handling
+    - **Property 2: Token Exchange Error Handling**
+    - **Validates: Requirements 1.4**
+
+- [x] 3. Implement setlist fetcher
+  - [x] 3.1 Create setlist.fm API client
+    - Define `SetlistSong` and `AverageSetlistParams` interfaces
+    - Implement `getAverageSetlist()` function
+    - Make HTTP request to setlist.fm API with artist ID and year
+    - Parse API response to extract song names and positions
+    - _Requirements: 2.1, 2.3_
+  - [x] 3.2 Add default year logic
+    - When year is not provided, use current year
+    - _Requirements: 2.2_
+  - [ ]\* 3.3 Write property test for default year assignment
+    - **Property 3: Default Year Assignment**
+    - **Validates: Requirements 2.2**
+  - [x] 3.4 Implement year retry logic
+    - If no songs found for requested year, retry with previous year
+    - Limit to one retry attempt
+    - _Requirements: 2.4_
+  - [ ]\* 3.5 Write property test for song order preservation
+    - **Property 4: Song Order Preservation**
+    - **Validates: Requirements 2.3, 2.5**
+  - [ ]\* 3.6 Write property test for year retry logic
+    - **Property 5: Year Retry Logic**
+    - **Validates: Requirements 2.4**
+  - [ ]\* 3.7 Write unit tests for setlist fetcher
+    - Test with mock API responses containing songs
+    - Test with empty responses triggering retry
+    - Test error handling for API failures
+    - _Requirements: 2.1, 2.3, 2.4, 2.5_
+
+- [x] 4. Implement track matcher
+  - [x] 4.1 Create Spotify track search function
+    - Define `TrackSearchResult` interface
+    - Implement `searchSpotifyTrack()` function
+    - Query Spotify search API with track name and artist name
+    - Set limit to 1 result per search
+    - Extract track URI from response
+    - _Requirements: 3.1, 3.2, 3.3_
+  - [x] 4.2 Implement batch track matching
+    - Implement `matchAllTracks()` function
+    - Iterate through all songs and search for each
+    - Continue processing even if individual searches fail
+    - Return array of results with found/not-found status
+    - _Requirements: 3.1, 3.4_
+  - [ ]\* 4.3 Write property test for track search completeness
+    - **Property 6: Track Search Completeness**
+    - **Validates: Requirements 3.1, 3.4**
+  - [ ]\* 4.4 Write unit tests for track matcher
+    - Test successful track search with mock Spotify response
+    - Test handling of tracks not found
+    - Test that processing continues after failures
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+
+- [x] 5. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 6. Implement playlist creator
+  - [x] 6.1 Create user ID fetcher
+    - Implement function to get authenticated user's Spotify ID
+    - Call `GET /v1/me` endpoint
+    - Extract and return user ID
+    - _Requirements: 4.1_
+  - [x] 6.2 Implement playlist creation
+    - Define `PlaylistCreationParams` and `PlaylistCreationResult` interfaces
+    - Implement `createPlaylist()` function
+    - Create playlist with formatted name: "{Artist} — Average Setlist {year}"
+    - Set playlist visibility to private (public: false)
+    - _Requirements: 4.2, 4.3_
+  - [ ]\* 6.3 Write property test for playlist name format
+    - **Property 7: Playlist Name Format**
+    - **Validates: Requirements 4.2**
+  - [ ]\* 6.4 Write property test for playlist visibility
+    - **Property 8: Playlist Visibility**
+    - **Validates: Requirements 4.3**
+  - [x] 6.5 Implement track addition to playlist
+    - Add all collected track URIs to the created playlist
+    - Call `POST /v1/playlists/{playlistId}/tracks` with URI array
+    - _Requirements: 4.4_
+  - [ ]\* 6.6 Write property test for track URI addition
+    - **Property 9: Track URI Addition**
+    - **Validates: Requirements 4.4**
+  - [x] 6.7 Format and return response
+    - Return object with playlistId, tracksAdded count, and year
+    - _Requirements: 4.5_
+  - [ ]\* 6.8 Write property test for response format completeness
+    - **Property 10: Response Format Completeness**
+    - **Validates: Requirements 4.5**
+  - [ ]\* 6.9 Write unit tests for playlist creator
+    - Test user ID fetch with mock response
+    - Test playlist creation with mock response
+    - Test track addition with mock response
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
+
+- [x] 7. Implement error handling
+  - [x] 7.1 Create error response formatter
+    - Implement function to format errors as JSON with message, code, and details
+    - Map error types to appropriate HTTP status codes
+    - _Requirements: 5.5_
+  - [x] 7.2 Add error handling for authentication failures
+    - Catch and format authentication errors as 401 responses
+    - _Requirements: 5.1_
+  - [x] 7.3 Add error handling for external API failures
+    - Catch and format API unavailability as 502 responses
+    - Include service name in error details
+    - _Requirements: 5.2_
+  - [x] 7.4 Add error handling for data not found
+    - Return 404 when no setlist data found after retry
+    - _Requirements: 5.3_
+  - [x] 7.5 Implement error logging
+    - Log all API failures with timestamp, error message, and context
+    - _Requirements: 5.4_
+  - [ ]\* 7.6 Write property test for error response format
+    - **Property 11: Error Response Format**
+    - **Validates: Requirements 5.1, 5.2, 5.3, 5.5**
+  - [ ]\* 7.7 Write property test for error logging
+    - **Property 12: Error Logging**
+    - **Validates: Requirements 5.4**
+  - [ ]\* 7.8 Write unit tests for error handling
+    - Test each error category produces correct response format
+    - Test error logging captures required information
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+
+- [x] 8. Implement main orchestrator
+  - [x] 8.1 Create main workflow function
+    - Define `CreatePlaylistRequest` interface
+    - Implement `handleCreatePlaylist()` function
+    - Validate access token is present
+    - Call setlist fetcher, track matcher, and playlist creator in sequence
+    - Handle errors and return appropriate responses
+    - _Requirements: 1.1, 2.1, 3.1, 4.1_
+  - [ ]\* 8.2 Write integration tests for main workflow
+    - Test complete workflow with mocked API responses
+    - Test error propagation through the stack
+    - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 5.2, 5.3_
+
+- [x] 9. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 10. Create Netlify function endpoints
+  - [x] 10.1 Implement login endpoint
+    - Create `netlify/functions/login.ts`
+    - Generate and redirect to Spotify authorization URL
+    - Read client ID and redirect URI from environment variables
+    - _Requirements: 1.1, 6.3_
+  - [x] 10.2 Implement callback endpoint
+    - Create `netlify/functions/callback.ts`
+    - Exchange authorization code for access token
+    - Return token to client or store in session
+    - Handle errors from token exchange
+    - _Requirements: 1.2, 1.3, 1.4, 6.3_
+  - [x] 10.3 Implement create-playlist endpoint
+    - Create `netlify/functions/create-playlist.ts`
+    - Parse query parameters: artistId, artistName, year (optional)
+    - Extract access token from request (header or cookie)
+    - Call main orchestrator function
+    - Return JSON response
+    - _Requirements: 2.1, 2.2, 3.1, 4.1, 4.5_
+  - [ ]\* 10.4 Write unit tests for Netlify function handlers
+    - Test request parsing and parameter extraction
+    - Test response formatting
+    - Test environment variable reading
+    - _Requirements: 6.3_
+
+- [x] 11. Create environment configuration
+  - [x] 11.1 Document required environment variables
+    - Create `.env.example` file with: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, `SETLISTFM_API_KEY`
+    - Add comments explaining each variable
+    - _Requirements: 6.3_
+  - [x] 11.2 Add environment variable validation
+    - Check that all required variables are present at startup
+    - Throw clear error if any are missing
+    - _Requirements: 6.3_
+
+- [x] 12. Create deployment configuration
+  - [x] 12.1 Create netlify.toml configuration
+    - Configure function directory and build settings
+    - Set Node.js version
+    - _Requirements: 6.1_
+  - [x] 12.2 Add build script to package.json
+    - Add TypeScript compilation step
+    - Ensure functions are built before deployment
+    - _Requirements: 6.1_
+
+- [x] 13. Final checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation at key milestones
+- Property tests validate universal correctness properties across randomized inputs
+- Unit tests validate specific examples, edge cases, and integration points
+- All external API calls should be mocked in tests to avoid dependencies on live services
