@@ -1,7 +1,7 @@
 [build]
   command = "npm run build"
   functions = "dist/netlify/functions"
-  publish = "dist"
+  publish = "public"
 
 [functions]
   node_bundler = "esbuild"
@@ -10,7 +10,7 @@
 [dev]
   command = "npm run build"
   functions = "dist/netlify/functions"
-  publish = "dist"
+  publish = "public"
 
 [[redirects]]
   from = "/api/*"

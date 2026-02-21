@@ -3,7 +3,7 @@
  * Handles Spotify OAuth callback and exchanges authorization code for access token
  */
 
-import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import { Handler, HandlerEvent, HandlerResponse } from '@netlify/functions';
 import { exchangeCodeForToken, SpotifyAuthConfig } from '../../src/oauth.js';
 import { handleError, ValidationError } from '../../src/error-handler.js';
 import { validateEnvironment } from '../../src/env-validator.js';
@@ -12,10 +12,7 @@ import { validateEnvironment } from '../../src/env-validator.js';
  * Callback handler - exchanges authorization code for access token
  * Requirements: 1.2, 1.3, 1.4, 6.3
  */
-export const handler: Handler = async (
-  event: HandlerEvent,
-  context: HandlerContext
-) => {
+export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   try {
     // Validate environment variables (Requirement 6.3)
     const env = validateEnvironment();
@@ -49,19 +46,13 @@ export const handler: Handler = async (
     // Exchange authorization code for access token (Requirements 1.2, 1.3)
     const tokenResponse = await exchangeCodeForToken(code, config);
 
-    // Return token to client (Requirement 1.3)
-    // In a production app, you might store this in a session or secure cookie
+    // Redirect to frontend with token (Requirement 1.3)
     return {
-      statusCode: 200,
+      statusCode: 302,
       headers: {
-        'Content-Type': 'application/json',
+        Location: `/?access_token=${tokenResponse.access_token}`,
       },
-      body: JSON.stringify({
-        access_token: tokenResponse.access_token,
-        token_type: tokenResponse.token_type,
-        expires_in: tokenResponse.expires_in,
-        refresh_token: tokenResponse.refresh_token,
-      }),
+      body: '',
     };
   } catch (error) {
     // Handle errors from token exchange (Requirement 1.4)

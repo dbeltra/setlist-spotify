@@ -1,35 +1,92 @@
 # Setlist to Spotify Playlist
 
-Serverless application to create Spotify playlists from setlist.fm average setlists.
+Automatically create Spotify playlists from an artist's average setlist using data from setlist.fm.
+
+## Features
+
+- 🎵 Fetches average setlist data from setlist.fm
+- 🔍 Searches and matches tracks on Spotify
+- 📝 Creates a private Spotify playlist with the setlist songs
+- 🎨 Simple, clean web interface
+- ⚡ Serverless deployment on Netlify
+
+## How to Use
+
+1. **Visit your deployed site** (e.g., `https://your-site.netlify.app`)
+
+2. **Login with Spotify** - Click the "Login with Spotify" button to authorize the app
+
+3. **Find an artist on setlist.fm**:
+   - Go to [setlist.fm](https://www.setlist.fm)
+   - Search for your favorite artist
+   - Copy the artist ID from the URL (e.g., `https://www.setlist.fm/setlists/taylor-swift-53926dfc.html` → ID is `53926dfc`)
+
+4. **Create your playlist**:
+   - Enter the artist ID
+   - Enter the artist name
+   - Optionally specify a year (defaults to current year)
+   - Click "Create Playlist"
+
+5. **Enjoy!** - Your new playlist will open in Spotify
+
+## Setup
+
+### Prerequisites
+
+- Node.js 20+
+- Netlify account
+- Spotify Developer account
+- setlist.fm API key
+
+### Environment Variables
+
+Create a `.env` file or set these in Netlify:
+
+```
+SPOTIFY_CLIENT_ID=your_spotify_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+SPOTIFY_REDIRECT_URI=https://your-site.netlify.app/.netlify/functions/callback
+SETLISTFM_API_KEY=your_setlistfm_api_key
+```
+
+### Local Development
+
+```bash
+npm install
+npm run build
+netlify dev
+```
+
+### Deployment
+
+```bash
+npm run build
+netlify deploy --prod
+```
+
+Or connect your GitHub repo to Netlify for automatic deployments.
 
 ## Project Structure
 
 ```
 .
-├── src/                    # Core application logic
-├── netlify/functions/      # Netlify serverless function endpoints
+├── public/                # Static frontend files
+│   └── index.html        # Web UI
+├── src/                  # Core application logic
+├── netlify/functions/    # Netlify serverless function endpoints
 ├── tests/
-│   ├── unit/              # Unit tests
-│   └── properties/        # Property-based tests
-├── tsconfig.json          # TypeScript configuration
-├── vitest.config.ts       # Vitest test configuration
-└── package.json           # Project dependencies and scripts
+│   ├── unit/            # Unit tests
+│   └── properties/      # Property-based tests
+├── tsconfig.json        # TypeScript configuration
+├── vitest.config.ts     # Vitest test configuration
+└── package.json         # Project dependencies and scripts
 ```
 
-## Setup
+## API Endpoints
 
-1. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-2. Configure environment variables (see `.env.example`)
-
-3. Build the project:
-   ```bash
-   npm run build
-   ```
+- `GET /.netlify/functions/login` - Initiates Spotify OAuth flow
+- `GET /.netlify/functions/callback` - Handles OAuth callback
+- `GET /.netlify/functions/create-playlist` - Creates the playlist
 
 ## Testing
 
@@ -37,6 +94,14 @@ Serverless application to create Spotify playlists from setlist.fm average setli
 - Run tests in watch mode: `npm run test:watch`
 - Run tests with coverage: `npm run test:coverage`
 
-## Deployment
+## Tech Stack
 
-Deploy to Netlify using the Netlify CLI or by connecting your Git repository.
+- TypeScript
+- Netlify Functions (Serverless)
+- Spotify Web API
+- setlist.fm API
+- Vanilla JavaScript (frontend)
+
+## License
+
+MIT

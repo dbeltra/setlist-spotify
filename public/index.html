@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setlist to Spotify Playlist</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: linear-gradient(135deg, #1db954 0%, #191414 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 100%;
+        padding: 40px;
+      }
+
+      h1 {
+        color: #191414;
+        font-size: 28px;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .subtitle {
+        color: #666;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+
+      .auth-section {
+        text-align: center;
+        padding: 20px 0;
+      }
+
+      .btn {
+        background: #1db954;
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 24px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn:hover {
+        background: #1ed760;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+      }
+
+      .btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .form-section {
+        display: none;
+      }
+
+      .form-section.active {
+        display: block;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        color: #191414;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #1db954;
+      }
+
+      .help-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+      }
+
+      .status {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        display: none;
+      }
+
+      .status.active {
+        display: block;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      .result {
+        text-align: center;
+        padding: 20px;
+      }
+
+      .result h2 {
+        color: #1db954;
+        margin-bottom: 10px;
+      }
+
+      .result p {
+        color: #666;
+        margin-bottom: 20px;
+      }
+
+      .playlist-link {
+        display: inline-block;
+        background: #191414;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 24px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .playlist-link:hover {
+        background: #333;
+        transform: translateY(-2px);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .loading.active {
+        display: block;
+      }
+
+      .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #1db954;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎵 Setlist to Spotify</h1>
+      <p class="subtitle">
+        Create a Spotify playlist from an artist's average setlist
+      </p>
+
+      <div id="status" class="status"></div>
+
+      <!-- Auth Section -->
+      <div id="auth-section" class="auth-section">
+        <p style="margin-bottom: 20px; color: #666">
+          Connect your Spotify account to get started
+        </p>
+        <a href="/.netlify/functions/login" class="btn">Login with Spotify</a>
+      </div>
+
+      <!-- Form Section -->
+      <div id="form-section" class="form-section">
+        <form id="playlist-form">
+          <div class="form-group">
+            <label for="artistId">Artist ID</label>
+            <input
+              type="text"
+              id="artistId"
+              required
+              placeholder="e.g., 53926dfc"
+            />
+            <p class="help-text">Find this on setlist.fm in the artist's URL</p>
+          </div>
+
+          <div class="form-group">
+            <label for="artistName">Artist Name</label>
+            <input
+              type="text"
+              id="artistName"
+              required
+              placeholder="e.g., Taylor Swift"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="year">Year (optional)</label>
+            <input
+              type="number"
+              id="year"
+              placeholder="e.g., 2024"
+              min="1900"
+              max="2100"
+            />
+            <p class="help-text">Leave empty for current year</p>
+          </div>
+
+          <button type="submit" class="btn" style="width: 100%">
+            Create Playlist
+          </button>
+        </form>
+      </div>
+
+      <!-- Loading Section -->
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Creating your playlist...</p>
+      </div>
+
+      <!-- Result Section -->
+      <div id="result" class="result" style="display: none">
+        <h2>✨ Playlist Created!</h2>
+        <p id="result-text"></p>
+        <a id="playlist-link" href="#" target="_blank" class="playlist-link"
+          >Open in Spotify</a
+        >
+        <br /><br />
+        <button onclick="location.reload()" class="btn">Create Another</button>
+      </div>
+    </div>
+
+    <script>
+      // Check for access token in URL (from callback)
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+
+      if (accessToken) {
+        // Store token
+        sessionStorage.setItem('spotify_token', accessToken);
+        // Clean URL
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+        showStatus('Successfully logged in!', 'success');
+        showForm();
+      } else if (sessionStorage.getItem('spotify_token')) {
+        showForm();
+      }
+
+      function showStatus(message, type) {
+        const status = document.getElementById('status');
+        status.textContent = message;
+        status.className = `status active ${type}`;
+        setTimeout(() => {
+          status.classList.remove('active');
+        }, 5000);
+      }
+
+      function showForm() {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('form-section').classList.add('active');
+      }
+
+      document
+        .getElementById('playlist-form')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const token = sessionStorage.getItem('spotify_token');
+          if (!token) {
+            showStatus('Please login first', 'error');
+            return;
+          }
+
+          const artistId = document.getElementById('artistId').value;
+          const artistName = document.getElementById('artistName').value;
+          const year = document.getElementById('year').value;
+
+          // Show loading
+          document.getElementById('form-section').style.display = 'none';
+          document.getElementById('loading').classList.add('active');
+
+          try {
+            let url = `/.netlify/functions/create-playlist?artistId=${encodeURIComponent(artistId)}&artistName=${encodeURIComponent(artistName)}`;
+            if (year) {
+              url += `&year=${year}`;
+            }
+
+            const response = await fetch(url, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(
+                data.error?.message || 'Failed to create playlist'
+              );
+            }
+
+            // Show result
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result-text').textContent =
+              `Added ${data.tracksAdded} tracks from ${artistName}'s ${data.year} setlist`;
+            document.getElementById('playlist-link').href =
+              `https://open.spotify.com/playlist/${data.playlistId}`;
+          } catch (error) {
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('form-section').style.display = 'block';
+            showStatus(error.message, 'error');
+          }
+        });
+    </script>
+  </body>
+</html>
