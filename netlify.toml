@@ -13,6 +13,21 @@
   publish = "public"
 
 [[redirects]]
+  from = "/callback"
+  to = "/.netlify/functions/callback"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/.netlify/functions/login"
+  status = 200
+
+[[redirects]]
+  from = "/create-playlist"
+  to = "/.netlify/functions/create-playlist"
+  status = 200
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200

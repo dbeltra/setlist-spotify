@@ -45,9 +45,11 @@ Create a `.env` file or set these in Netlify:
 ```
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-SPOTIFY_REDIRECT_URI=https://your-site.netlify.app/.netlify/functions/callback
+SPOTIFY_REDIRECT_URI=https://your-site.netlify.app/callback
 SETLISTFM_API_KEY=your_setlistfm_api_key
 ```
+
+**Important**: The redirect URI should be `https://your-site.netlify.app/callback` (not `/.netlify/functions/callback`). The app uses Netlify redirects to route this cleanly.
 
 ### Local Development
 
