@@ -222,7 +222,7 @@
         <p style="margin-bottom: 20px; color: #666">
           Connect your Spotify account to get started
         </p>
-        <a href="/login" class="btn">Login with Spotify</a>
+        <a href="/.netlify/functions/login" class="btn">Login with Spotify</a>
       </div>
 
       <!-- Form Section -->
@@ -339,7 +339,7 @@
           document.getElementById('loading').classList.add('active');
 
           try {
-            let url = `/create-playlist?artistId=${encodeURIComponent(artistId)}&artistName=${encodeURIComponent(artistName)}`;
+            let url = `/.netlify/functions/create-playlist?artistId=${encodeURIComponent(artistId)}&artistName=${encodeURIComponent(artistName)}`;
             if (year) {
               url += `&year=${year}`;
             }

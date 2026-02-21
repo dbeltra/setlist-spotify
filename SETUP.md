@@ -1,68 +1,76 @@
 # Setup Instructions
 
-## Fix the Redirect URI Issue
+## Current Configuration (Correct)
 
-You're getting a 404 because your Spotify app is configured with the wrong redirect URI. Here's how to fix it:
+Your current setup is correct! Keep these settings:
 
-### Step 1: Update Spotify Developer Settings
+### Spotify Developer Dashboard
 
-1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Click on your app
-3. Click "Edit Settings"
-4. Under "Redirect URIs", update or add:
-   ```
-   https://setlist-to-spotify.netlify.app/callback
-   ```
-   **Note**: Use `/callback` NOT `/.netlify/functions/callback`
-5. Click "Save"
+Redirect URI should be:
 
-### Step 2: Update Netlify Environment Variable
-
-1. Go to your Netlify dashboard
-2. Select your site
-3. Go to "Site configuration" → "Environment variables"
-4. Update `SPOTIFY_REDIRECT_URI` to:
-   ```
-   https://setlist-to-spotify.netlify.app/callback
-   ```
-5. Save and redeploy
-
-### Step 3: Redeploy
-
-After updating the environment variable, trigger a new deployment:
-
-```bash
-git add .
-git commit -m "Fix redirect URI"
-git push
+```
+https://setlist-to-spotify.netlify.app/.netlify/functions/callback
 ```
 
-Or manually trigger a deploy in Netlify dashboard.
+### Netlify Environment Variable
 
-## How It Works
+`SPOTIFY_REDIRECT_URI` should be:
 
-The app uses Netlify redirect rules (in `netlify.toml`) to route clean URLs:
+```
+https://setlist-to-spotify.netlify.app/.netlify/functions/callback
+```
 
-- `/callback` → `/.netlify/functions/callback`
-- `/login` → `/.netlify/functions/login`
-- `/create-playlist` → `/.netlify/functions/create-playlist`
+## If You're Still Getting Errors
 
-This gives you cleaner URLs without exposing the `/.netlify/functions/` path.
+### "Invalid redirect URI" Error
+
+This means there's a mismatch. Double-check:
+
+1. **Spotify Dashboard** (https://developer.spotify.com/dashboard):
+   - Click your app → Edit Settings
+   - Under "Redirect URIs", you should see EXACTLY:
+     ```
+     https://setlist-to-spotify.netlify.app/.netlify/functions/callback
+     ```
+   - If it's different, update it and click Save
+
+2. **Netlify Environment Variables**:
+   - Go to Site configuration → Environment variables
+   - `SPOTIFY_REDIRECT_URI` should be EXACTLY:
+     ```
+     https://setlist-to-spotify.netlify.app/.netlify/functions/callback
+     ```
+   - If you change it, redeploy your site
+
+3. **Redeploy** after any changes:
+   ```bash
+   git add .
+   git commit -m "Update configuration"
+   git push
+   ```
+
+### Common Issues
+
+**Issue**: "INVALID_REQUEST: Invalid redirect URI"
+**Solution**: The redirect URI in Spotify Dashboard and the `SPOTIFY_REDIRECT_URI` environment variable must match EXACTLY (including `https://`, trailing slashes, etc.)
+
+**Issue**: 404 Not Found on callback
+**Solution**: Make sure you've deployed the latest code
 
 ## Testing Locally
 
 For local development with Netlify Dev:
 
-1. Update your `.env` file:
+1. Add to your Spotify app's redirect URIs:
 
    ```
-   SPOTIFY_REDIRECT_URI=http://localhost:8888/callback
+   http://localhost:8888/.netlify/functions/callback
    ```
 
-2. Add this to your Spotify app's redirect URIs:
+2. Update your local `.env` file:
 
    ```
-   http://localhost:8888/callback
+   SPOTIFY_REDIRECT_URI=http://localhost:8888/.netlify/functions/callback
    ```
 
 3. Run:
@@ -74,13 +82,14 @@ For local development with Netlify Dev:
 
 4. Visit `http://localhost:8888`
 
-## Verification
+## Verification Steps
 
-After making these changes, the OAuth flow should work:
+After deploying, test the OAuth flow:
 
-1. Click "Login with Spotify" → redirects to Spotify
-2. Approve permissions → redirects to `/callback`
-3. Callback exchanges code for token → redirects to `/?access_token=...`
-4. Frontend stores token and shows the form
+1. Visit `https://setlist-to-spotify.netlify.app`
+2. Click "Login with Spotify"
+3. You should be redirected to Spotify's authorization page
+4. After approving, you should be redirected back to your app with the form visible
+5. No 404 or "Invalid redirect URI" errors
 
-You should no longer see the 404 error!
+If you see any errors, check the browser console and network tab for details.
